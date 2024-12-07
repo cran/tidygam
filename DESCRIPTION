@@ -1,8 +1,8 @@
 Package: tidygam
 Type: Package
 Title: Tidy Prediction and Plotting of Generalised Additive Models
-Version: 0.2.0
-Date: 2023-05-08
+Version: 0.2.2
+Date: 2024-12-07
 Authors@R: 
     c(person(given = "Stefano",
              family = "Coretta",
@@ -22,12 +22,12 @@ Imports: cli, dplyr, ggplot2, glue, insight, magrittr, mgcv, rlang,
         stringr, tibble, tidyr, tidyselect
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
-Language: en_GB
-RoxygenNote: 7.2.0
+Language: en-US
+RoxygenNote: 7.3.2
 Depends: R (>= 2.10)
 NeedsCompilation: no
-Packaged: 2023-05-08 13:02:33 UTC; ste
+Packaged: 2024-12-07 10:37:25 UTC; ste
 Author: Stefano Coretta [aut, cre]
 Maintainer: Stefano Coretta <stefano.coretta@gmail.com>
 Repository: CRAN
-Date/Publication: 2023-05-09 08:50:02 UTC
+Date/Publication: 2024-12-07 10:50:02 UTC
