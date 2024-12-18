@@ -92,7 +92,7 @@ predict_gam <- function(model, length_out = 10, values = NULL,
     )
     excluded_vars <- setdiff(to_exclude, to_keep)
 
-    predictors <- predictors[-which(predictors %in% excluded_vars)]
+    # predictors <- predictors[-which(predictors %in% excluded_vars)]
   }
 
   pred_grid <- lapply(predictors, function(x) {
@@ -158,28 +158,17 @@ predict_gam <- function(model, length_out = 10, values = NULL,
 
   names(pred_grid) <- predictors
   pred_grid <- tibble::as_tibble(expand.grid(pred_grid))
+  preds <- mgcv::predict.gam(model, pred_grid, type = "lpmatrix")
 
-  if (is.null(exclude_terms)) {
-    preds <- mgcv::predict.gam(model, newdata = pred_grid, se.fit = TRUE)
-    fit <- preds$fit
-    se <- preds$se
-  } else {
-    preds_terms <- mgcv::predict.gam(model, newdata = pred_grid, se.fit = TRUE, type = "terms", exclude = exclude_terms, newdata.guaranteed = TRUE)
-
-    preds_fit <- dplyr::mutate(
-      tibble::as_tibble(preds_terms$fit),
-      fit = rowSums(dplyr::across())
-    )
-    fit <- preds_fit$fit + attr(preds_terms, "constant")[["(Intercept)"]]
-
-    preds_se <- dplyr::mutate(
-      tibble::as_tibble(preds_terms$se.fit),
-      se = rowSums(dplyr::across())
-    )
-    se <- preds_se$se
+  if (!is.null(exclude_terms)) {
+    for (to_set in exclude_terms) {
+      preds[,which(stringr::str_detect(colnames(preds), stringr::fixed(to_set)))] <- 0
+    }
   }
 
   pred_out <- pred_grid
+  fit <- preds %*% stats::coef(model)
+  se <- sqrt(rowSums((preds %*% stats::vcov(model)) * preds))
 
   if (!is.null(tran_fun)) {
     pred_out[[response]] <- tran_fun(fit)
@@ -187,7 +176,7 @@ predict_gam <- function(model, length_out = 10, values = NULL,
     pred_out$lower_ci <- tran_fun(fit - se * ci_z)
     pred_out$upper_ci <- tran_fun(fit + se * ci_z)
   } else {
-    pred_out[[response]] <- fit
+    pred_out[[response]] <- fit[,1]
     pred_out$se <- se
     pred_out$lower_ci <- fit - se * ci_z
     pred_out$upper_ci <- fit + se * ci_z

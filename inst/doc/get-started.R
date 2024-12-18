@@ -39,7 +39,7 @@ predict_gam(gs, tran_fun = exp) %>%
 
 ## ----gs-by--------------------------------------------------------------------
 gs_by <- gam(
-  count ~ s(months, by = background, k = 3),
+  count ~ background + s(months, by = background, k = 3),
   data = gest,
   family = poisson
 )
@@ -59,7 +59,8 @@ gs_by %>%
 
 ## ----gs-by-2------------------------------------------------------------------
 gs_by_2 <- gam(
-  count ~ s(months, by = background, k = 3) +
+  count ~ gesture + background +
+    s(months, by = background, k = 3) +
     s(months, by = gesture, k = 3),
   data = gest,
   family = poisson
@@ -74,12 +75,24 @@ gs_by_2 %>%
   scale_color_brewer(type = "qual") + scale_fill_brewer(type = "qual") +
   facet_grid(~ background)
 
+## ----gs-by-2-plot-2-----------------------------------------------------------
+to_exclude <- c("s(months):gestureho_gv", "s(months):gesturepoint", "s(months):gesturereach",
+                "gesturepoint", "gesturereach")
+
+gs_by_2 %>%
+  predict_gam(length_out = 20, series = "months", tran_fun = exp,
+              exclude_terms = to_exclude,
+              # pick any value of the excluded variables.
+              values = list(gesture = "point")) %>%
+  plot(comparison = "background") +
+  scale_color_brewer(type = "qual") + scale_fill_brewer(type = "qual")
+
 ## ----gs-i---------------------------------------------------------------------
 gest <- gest %>%
   mutate(back_gest = interaction(background, gesture))
 
 gs_i <- gam(
-  count ~ s(months, by = back_gest, k = 3),
+  count ~ back_gest + s(months, by = back_gest, k = 3),
   data = gest,
   family = poisson
 )
@@ -103,7 +116,7 @@ struct <- struct %>%
   mutate(stim_gram = interaction(stimulus.condition, grammar.condition))
 
 st <- bam(
-  voltage ~
+  voltage ~ stim_gram +
     s(t, by = stim_gram, k = 5) +
     s(t, subject, bs = "fs", m = 1),
   data = struct
@@ -117,6 +130,9 @@ predict_gam(
   length_out = 50,
   series = "t",
   exclude_terms = "s(t,subject)",
+  # Pick any subject: since we are removing the random effect, it does not
+  # matter which one you pick, the predictions will be the same
+  values = c(subject = "03"),
   separate = list(stim_gram = c("stimulus", "grammar"))
 ) %>%
   plot(comparison = "grammar") +
